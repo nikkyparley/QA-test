@@ -1,0 +1,54 @@
+Application health checker :
+
+
+
+import requests
+from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+
+# Configuration
+URL = 'http://your-application-url.com'
+LOG_FILE = '/path/to/log_file.log'
+CHECK_INTERVAL = 60  # Time in seconds between checks
+EMAIL_REPORT = True
+EMAIL_TO = 'you@example.com'
+EMAIL_FROM = 'healthcheck@example.com'
+SMTP_SERVER = 'smtp.example.com'
+SMTP_PORT = 587
+SMTP_USER = 'smtp_user'
+SMTP_PASSWORD = 'smtp_password'
+
+def check_application_health():
+    try:
+        response = requests.get(URL)
+        status = 'up' if response.status_code == 200 else 'down'
+    except requests.RequestException:
+        status = 'down'
+    return status
+
+def log_result(status):
+    with open(LOG_FILE, 'a') as log_file:
+        log_file.write(f"{datetime.now()}: Application is {status}\n")
+
+def send_email_report(status):
+    message = MIMEText(f"Application Status: {status}\n\nChecked at: {datetime.now()}")
+    message['Subject'] = f"Application Health Check Report - {status.capitalize()}"
+    message['From'] = EMAIL_FROM
+    message['To'] = EMAIL_TO
+
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.send_message(message)
+
+def main():
+    while True:
+        status = check_application_health()
+        log_result(status)
+        if EMAIL_REPORT:
+            send_email_report(status)
+        time.sleep(CHECK_INTERVAL)
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,51 @@
+Automated Backup Solution :
+
+
+import os
+import subprocess
+import smtplib
+from email.mime.text import MIMEText
+from datetime import datetime
+
+# Configuration
+LOCAL_DIRECTORY = '/path/to/local/directory'
+REMOTE_SERVER = 'user@remote_server:/path/to/remote/directory'
+LOG_FILE = '/path/to/log_file.log'
+EMAIL_REPORT = True
+EMAIL_TO = 'you@example.com'
+EMAIL_FROM = 'backup@example.com'
+SMTP_SERVER = 'smtp.example.com'
+SMTP_PORT = 587
+SMTP_USER = 'smtp_user'
+SMTP_PASSWORD = 'smtp_password'
+
+def run_backup():
+    result = subprocess.run(['rsync', '-avz', LOCAL_DIRECTORY, REMOTE_SERVER], capture_output=True, text=True)
+    return result
+
+def log_result(result):
+    with open(LOG_FILE, 'a') as log_file:
+        log_file.write(f"{datetime.now()}: {'Success' if result.returncode == 0 else 'Failure'}\n")
+        log_file.write(result.stdout)
+        log_file.write(result.stderr)
+
+def send_email_report(result):
+    status = 'Success' if result.returncode == 0 else 'Failure'
+    message = MIMEText(f"Backup Status: {status}\n\nOutput:\n{result.stdout}\n\nErrors:\n{result.stderr}")
+    message['Subject'] = f"Backup Report - {status}"
+    message['From'] = EMAIL_FROM
+    message['To'] = EMAIL_TO
+
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.send_message(message)
+
+def main():
+    result = run_backup()
+    log_result(result)
+    if EMAIL_REPORT:
+        send_email_report(result)
+
+if __name__ == '__main__':
+    main()
