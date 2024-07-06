@@ -1,0 +1,11 @@
+# test_integration.py
+import requests
+
+def test_frontend_backend_integration():
+    response = requests.get("http://localhost:8080")
+    assert response.status_code == 200
+    assert "Hello from the backend!" in response.text
+    print("nikky parley!")
+
+if __name__ == "__main__":
+    test_frontend_backend_integration()
